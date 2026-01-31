@@ -2,18 +2,14 @@
 #include <WiFiManager.h>
 #include <Preferences.h>
 #include "../include/dataSender.h"
-#include "../include/espcom.h"
+#include "../include/uartcom.h"
 
 bool wifiSetup();
 void send_espcom_msg(uint8_t command, bool door_status, int8_t temp);
-void get_espcom_msg(peripheral_resp* msg);
 //mac addresses of different peripherals
 uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
 //global uuid :)
 String uuid;
-
-//struct of espnow Rx
-peripheral_resp rxMsg;
 
 //command definitions
 #define OPEN_DOOR 1;
@@ -27,12 +23,27 @@ peripheral_resp rxMsg;
 #define WATER 4;
 #define FOOD 5;
 
+#define TX_PIN 17
+#define RX_PIN 16
+
 //static pointers for checking if values are null before sending
 static bool* door = nullptr;
 static int* temp = nullptr;
 static int* humidity = nullptr;
 static bool* food = nullptr;
 static bool* water = nullptr;
+
+
+void readUART(SensorData* _status);
+
+
+//init sensorData
+static SensorData latestData;
+static bool haveData = true;
+
+//Timer data for sending to server
+static unsigned long lastSendMs = 0;
+constexpr unsigned long SEND_INTERVAL_MS = 5000;
 
 void setup() {
     //serial setup
@@ -58,20 +69,30 @@ void setup() {
       exit(1);
     }
 
-    //init esp-now
-    init_esp_now();
-    //send test message
-    send_espcom_msg(1, true, 0); 
+    //init uart communication
+    uart_link_begin(1, 115200, RX_PIN, TX_PIN);
 }
 
 void loop() {
 
-  //listen for msg response from esp_now
-  espcom_get_last_message(&rxMsg);
-  //get info and send in one line
-  //fill in espcom?
-  sendData(uuid);
-  delay(5000);
+  // ---- Continuously read UART ----
+  SensorData incoming;
+  if (uart_read_sensor(incoming)) {
+    latestData = incoming;
+    haveData = true;
+  }
+
+  // ---- Periodic send to server ----
+  unsigned long now = millis();
+  if (haveData && (now - lastSendMs >= SEND_INTERVAL_MS)) {
+    lastSendMs = now;
+
+    // You already have this:
+    sendData("test");
+  }
+
+  // Keep loop responsive
+  delay(5);
 }
 
 bool wifiSetup(){
@@ -81,20 +102,4 @@ bool wifiSetup(){
   //try to connect
   bool res;
   return res = wm.autoConnect();
-}
-
-
-void send_espcom_msg(uint8_t command, bool door_status, int8_t temp)
-{
-  struct_message myMessage;
-  myMessage.command = command;
-  myMessage.door_status = door_status;
-  myMessage.temp = temp;
-
-  send_broadcast_message(&myMessage);
-}
-
-void get_espcom_msg(peripheral_resp* msg)
-{
-  espcom_get_last_message(msg);
 }
