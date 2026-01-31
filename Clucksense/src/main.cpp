@@ -1,95 +1,68 @@
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include <WiFiManager.h>
 #include <Preferences.h>
+#include <LiquidCrystal_I2C.h>
 #include "../include/dataSender.h"
-#include "../include/uartcom.h"
-
-bool wifiSetup();
-void send_espcom_msg(uint8_t command, bool door_status, int8_t temp);
-//mac addresses of different peripherals
-uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
-//global uuid :)
-String uuid;
-
-//command definitions
-#define OPEN_DOOR 1;
-#define CLOSE_DOOR 2;
-#define SET_TEMP 3;
-
-//Rx type definitions
-#define DOOR 1;
-#define TEMP 2;
-#define HUMIDITY 3;
-#define WATER 4;
-#define FOOD 5;
 
 #define TX_PIN 17
 #define RX_PIN 16
 
-//static pointers for checking if values are null before sending
-static bool* door = nullptr;
-static int* temp = nullptr;
-static int* humidity = nullptr;
-static bool* food = nullptr;
-static bool* water = nullptr;
-
-
-void readUART(SensorData* _status);
-
-
-//init sensorData
-static SensorData latestData;
-static bool haveData = true;
-
-//Timer data for sending to server
-static unsigned long lastSendMs = 0;
-constexpr unsigned long SEND_INTERVAL_MS = 5000;
+bool wifiSetup();
+String uuid;
+LiquidCrystal_I2C lcd(0x27,16,2);
 
 void setup() {
-    //serial setup
-    Serial.begin(115200);
-
-    //try and connect to wifi
-    bool res = wifiSetup();
-    if(res){
-      Serial.println("Connected");
-      //preferences writes the uuid to persistent memory, if already there we just pull it.
-      Preferences prefs;
-      prefs.begin("config", false);
-      uuid = prefs.getString("uuid", "");
-      if(uuid == ""){
-        uuid = getUUID();
-        prefs.putString("uuid", uuid);
-      }
-      prefs.end();
-      Serial.println(uuid);
+  Serial.begin(115200);
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+  //connect to wifi
+  bool res = wifiSetup();
+  if(res){
+    Preferences prefs;
+    prefs.begin("config", false);
+    uuid = prefs.getString("uuid", "");
+    if(uuid == ""){
+      uuid = getUUID();
+      prefs.putString("uuid", uuid);
     }
-    else{
-      Serial.println("Not Connected.");
-      exit(1);
-    }
-
-    //init uart communication
-    Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
+    prefs.end();
+  }else{
+    Serial.println("Failed to Connect.");
+    exit(1);
+  }
+  lcd.setCursor(0,0);
+  lcd.print(uuid);
+  //init uart connection on serial2 (tx2 and rx2)
+  Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
 }
 
-void loop() {
-
+void loop(){
+  //recieve sensor data
   if (Serial2.available()) {
-        String msg = Serial2.readStringUntil('\n');
-        Serial.print("Received: ");
-        Serial.println(msg);
-    }
+      String msg = Serial2.readStringUntil('\n');
+      StaticJsonDocument<256> doc;
+      deserializeJson(doc, msg);
 
-  // Keep loop responsive
-  delay(5);
+      doc["coopID"] = "Coop_1";
+
+      String out;
+      serializeJson(doc, out);
+      Serial.println(out);
+      //update coop ai
+      sendData(out);
+  }
+  //update coop api
+  //send commands
+  
 }
 
 bool wifiSetup(){
-  //wifi manager
+  //wifi manager object
   WiFiManager wm;
 
   //try to connect
   bool res;
-  return res = wm.autoConnect();
+  return res = wm.autoConnect("CluckSense_Config");
 }
