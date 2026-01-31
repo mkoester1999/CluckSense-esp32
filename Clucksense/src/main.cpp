@@ -7,6 +7,7 @@
 bool wifiSetup();
 void getHelloWorld();
 const char* StatusURL = "http://www.clucksense.com/api/status";
+void send_espcom_msg(uint8_t command, bool door_status, int8_t temp);
 
 //mac addresses of different peripherals
 uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
@@ -31,6 +32,11 @@ void setup() {
     }
 
     getHelloWorld();
+
+    //init esp-now
+    init_esp_now();
+    //send message
+    send_espcom_msg(1, true, 0); 
 }
 
 void loop() {
@@ -68,4 +74,12 @@ void getHelloWorld() {
   http.end();
 }
 
+void send_espcom_msg(uint8_t command, bool door_status, int8_t temp)
+{
+  struct_message myMessage;
+  myMessage.command = command;
+  myMessage.door_status = door_status;
+  myMessage.temp = temp;
 
+  send_broadcast_message(&myMessage);
+}
