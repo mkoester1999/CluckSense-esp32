@@ -6,6 +6,10 @@ uint8_t broadcastAddress[] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};  // Broadcast
 // Definition of peerInfo (global for ESP-NOW)
 esp_now_peer_info_t peerInfo;  // Define peerInfo here
 
+//definition of peripheral_resp
+static peripheral_resp myResp;
+
+static volatile bool newMsgAvailable = false;
 // Callback function for when data is sent
 void OnDataSent(const uint8_t* mac_addr, esp_now_send_status_t status)
 {
@@ -41,6 +45,8 @@ int init_esp_now()
         return 1;
     }
 
+    //register callback for receiving messaged
+    esp_now_register_recv_cb(OnDataRecv);
     return 0;
 }
 
@@ -55,4 +61,30 @@ void send_broadcast_message(struct_message *msg)
     } else {
         Serial.println("Error sending message");
     }
+}
+
+void OnDataRecv(const uint8_t *mac, const uint8_t* incomingData, int len)
+{
+    memcpy (&myResp, incomingData, sizeof(myResp));
+    Serial.printf("Received %d Bytes", len);
+    Serial.printf("Type: %d\n", myResp.type);
+    Serial.printf("Door status: %d\n", myResp.door_status);
+    Serial.printf("Temperature: %d\n", myResp.temp);
+    Serial.printf("Humidity: %d\n", myResp.humidity);
+    Serial.printf("Food: %d\n", myResp.food);
+    Serial.printf("Water: %d\n", myResp.water);
+
+}
+
+bool espcom_check_msg_recv()
+{
+    return newMsgAvailable;
+}
+
+bool espcom_get_last_message(peripheral_resp * out)
+{
+    if (!newMsgAvailable) return false;
+    memcpy(&out, &myResp, sizeof(peripheral_resp));
+    newMsgAvailable = false; //reset msg flag
+    return true;
 }

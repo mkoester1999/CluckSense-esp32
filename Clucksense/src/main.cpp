@@ -6,16 +6,33 @@
 
 bool wifiSetup();
 void send_espcom_msg(uint8_t command, bool door_status, int8_t temp);
-
+void get_espcom_msg(peripheral_resp* msg);
 //mac addresses of different peripherals
 uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
 //global uuid :)
 String uuid;
 
+//struct of espnow Rx
+peripheral_resp rxMsg;
+
 //command definitions
 #define OPEN_DOOR 1;
 #define CLOSE_DOOR 2;
 #define SET_TEMP 3;
+
+//Rx type definitions
+#define DOOR 1;
+#define TEMP 2;
+#define HUMIDITY 3;
+#define WATER 4;
+#define FOOD 5;
+
+//static pointers for checking if values are null before sending
+static bool* door = nullptr;
+static int* temp = nullptr;
+static int* humidity = nullptr;
+static bool* food = nullptr;
+static bool* water = nullptr;
 
 void setup() {
     //serial setup
@@ -43,11 +60,14 @@ void setup() {
 
     //init esp-now
     init_esp_now();
-    //send message
+    //send test message
     send_espcom_msg(1, true, 0); 
 }
 
 void loop() {
+
+  //listen for msg response from esp_now
+  espcom_get_last_message(&rxMsg);
   //get info and send in one line
   //fill in espcom?
   sendData(uuid);
@@ -72,4 +92,9 @@ void send_espcom_msg(uint8_t command, bool door_status, int8_t temp)
   myMessage.temp = temp;
 
   send_broadcast_message(&myMessage);
+}
+
+void get_espcom_msg(peripheral_resp* msg)
+{
+  espcom_get_last_message(msg);
 }
