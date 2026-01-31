@@ -1,11 +1,9 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
-#include <WebServer.h>
-#include <HTTPClient.h>
+#include <Preferences.h>
+#include "../include/dataSender.h"
 
 bool wifiSetup();
-void getHelloWorld();
-const char* URL = "http://example.com/";
 
 void setup() {
     //serial setup
@@ -14,17 +12,27 @@ void setup() {
     bool res = wifiSetup();
     if(res){
       Serial.println("Connected");
+      //preferences writes to persistent memory
+      Preferences prefs;
+      prefs.begin("config", false);
+      String uuid = prefs.getString("uuid", "");
+      if(uuid == ""){
+        uuid = getUUID();
+        prefs.putString("uuid", uuid);
+      }
+      prefs.end();
+      Serial.println(uuid);
     }
     else{
       Serial.println("Not Connected.");
       exit(1);
     }
-
-    getHelloWorld();
 }
 
 void loop() {
-  
+  //get info and send in one line
+  delay(1000);
+  //espnow stuff
 }
 
 bool wifiSetup(){
@@ -38,22 +46,3 @@ bool wifiSetup(){
     return res = wm.autoConnect();
 }
 
-void getHelloWorld() {
-
-  HTTPClient http;
-  http.begin(URL);  // Adjust your hostname here
-
-  int httpCode = http.GET();
-
-  if (httpCode == HTTP_CODE_OK) {
-    // Get the response body as a raw string
-    String payload = http.getString();
-
-    Serial.println("Raw response:");
-    Serial.println(payload);  // This is the raw string response
-  } else {
-    Serial.printf("HTTP GET failed, code: %d\n", httpCode);
-  }
-
-  http.end();
-}
