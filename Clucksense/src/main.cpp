@@ -5,7 +5,7 @@
 
 bool wifiSetup();
 void getHelloWorld();
-const char* URL = "http://example.com/";
+const char* StatusURL = "http://www.clucksense.com/api/status";
 
 void setup() {
     //serial setup
@@ -41,7 +41,7 @@ bool wifiSetup(){
 void getHelloWorld() {
 
   HTTPClient http;
-  http.begin(URL);  // Adjust your hostname here
+  http.begin(StatusURL);  // Adjust your hostname here
 
   int httpCode = http.GET();
 
