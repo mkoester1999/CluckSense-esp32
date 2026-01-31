@@ -56,7 +56,7 @@ void loop(){
       Serial.println(out);
       //update coop
       String command = sendData(out);
-      Serial2.println("1,0,74"); //change to out eventually
+      Serial2.println(out); //change to out eventually
   }  
 }
 
