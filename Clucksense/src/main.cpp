@@ -9,7 +9,8 @@ void send_espcom_msg(uint8_t command, bool door_status, int8_t temp);
 
 //mac addresses of different peripherals
 uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
-
+//global uuid :)
+String uuid;
 
 //command definitions
 #define OPEN_DOOR 1;
@@ -20,13 +21,14 @@ void setup() {
     //serial setup
     Serial.begin(115200);
 
+    //try and connect to wifi
     bool res = wifiSetup();
     if(res){
       Serial.println("Connected");
-      //preferences writes to persistent memory
+      //preferences writes the uuid to persistent memory, if already there we just pull it.
       Preferences prefs;
       prefs.begin("config", false);
-      String uuid = prefs.getString("uuid", "");
+      uuid = prefs.getString("uuid", "");
       if(uuid == ""){
         uuid = getUUID();
         prefs.putString("uuid", uuid);
@@ -38,7 +40,7 @@ void setup() {
       Serial.println("Not Connected.");
       exit(1);
     }
-    
+
     //init esp-now
     init_esp_now();
     //send message
@@ -47,19 +49,18 @@ void setup() {
 
 void loop() {
   //get info and send in one line
-  delay(1000);
-  //espnow stuff
+  //fill in espcom?
+  sendData(uuid);
+  delay(5000);
 }
 
 bool wifiSetup(){
-    //wifi manager
-    WiFiManager wm;
+  //wifi manager
+  WiFiManager wm;
 
-    //try to connect
-    Serial.println("Open phone now!");
-    
-    bool res;
-    return res = wm.autoConnect();
+  //try to connect
+  bool res;
+  return res = wm.autoConnect();
 }
 
 
