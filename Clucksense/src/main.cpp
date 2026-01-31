@@ -70,26 +70,16 @@ void setup() {
     }
 
     //init uart communication
-    uart_link_begin(1, 115200, RX_PIN, TX_PIN);
+    Serial2.begin(115200, SERIAL_8N1, RX_PIN, TX_PIN);
 }
 
 void loop() {
 
-  // ---- Continuously read UART ----
-  SensorData incoming;
-  if (uart_read_sensor(incoming)) {
-    latestData = incoming;
-    haveData = true;
-  }
-
-  // ---- Periodic send to server ----
-  unsigned long now = millis();
-  if (haveData && (now - lastSendMs >= SEND_INTERVAL_MS)) {
-    lastSendMs = now;
-
-    // You already have this:
-    sendData("test");
-  }
+  if (Serial2.available()) {
+        String msg = Serial2.readStringUntil('\n');
+        Serial.print("Received: ");
+        Serial.println(msg);
+    }
 
   // Keep loop responsive
   delay(5);
