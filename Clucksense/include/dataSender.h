@@ -5,4 +5,4 @@
     /*Returns an 8 character alphanumeric uuid from the db*/
     String getUUID();
     /*sends data to the server*/
-    void sendData(String);
+    String sendData(String);

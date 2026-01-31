@@ -5,9 +5,11 @@
 #include <LiquidCrystal_I2C.h>
 #include "../include/dataSender.h"
 
+//uart pins
 #define TX_PIN 17
 #define RX_PIN 16
 
+//wifi and lcd
 bool wifiSetup();
 String uuid;
 LiquidCrystal_I2C lcd(0x27,16,2);
@@ -32,6 +34,7 @@ void setup() {
     Serial.println("Failed to Connect.");
     exit(1);
   }
+  //print uuid to the user so they can pair with their phone.
   lcd.setCursor(0,0);
   lcd.print(uuid);
   //init uart connection on serial2 (tx2 and rx2)
@@ -39,23 +42,22 @@ void setup() {
 }
 
 void loop(){
-  //recieve sensor data
+  //recieve sensor data, if there is any
   if (Serial2.available()) {
       String msg = Serial2.readStringUntil('\n');
       StaticJsonDocument<256> doc;
       deserializeJson(doc, msg);
 
-      doc["coopID"] = "Coop_1";
+      //append the coop id, the uuid
+      doc["coopID"] = "Coop_1"; //change to uuid eventually
 
       String out;
       serializeJson(doc, out);
       Serial.println(out);
-      //update coop ai
-      sendData(out);
-  }
-  //update coop api
-  //send commands
-  
+      //update coop
+      String command = sendData(out);
+      Serial2.println("1,0,74"); //change to out eventually
+  }  
 }
 
 bool wifiSetup(){
