@@ -1,5 +1,7 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
+#include <WebServer.h>
+#include "http.cpp"
 
 bool wifiSetup();
 
@@ -13,6 +15,7 @@ void setup() {
     }
     else{
       Serial.println("Not Connected.");
+      exit(1);
     }
 }
 
