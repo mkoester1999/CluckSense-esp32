@@ -5,6 +5,14 @@ void setup() {
     //serial setup
     Serial.begin(115200);
 
+    bool res = wifiSetup();
+}
+
+void loop() {
+  
+}
+
+bool wifiSetup(){
     //wifi manager
     WiFiManager wm;
 
@@ -12,18 +20,11 @@ void setup() {
     Serial.println("Open phone now!");
     
     bool res;
-    res = wm.autoConnect();
-
-    if(!res){
-      Serial.println("failed to connect");
-    }
-    else{
+    if(res){
       Serial.println("Connected.");
     }
-
+    else{
+      Serial.println("Failed to connect.");
+    }
+    return res = wm.autoConnect();
 }
-
-void loop() {
-  
-}
-
