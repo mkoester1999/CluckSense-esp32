@@ -1,11 +1,19 @@
 #include <Arduino.h>
 #include <WiFiManager.h>
 
+bool wifiSetup();
+
 void setup() {
     //serial setup
     Serial.begin(115200);
 
     bool res = wifiSetup();
+    if(res){
+      Serial.println("Connected");
+    }
+    else{
+      Serial.println("Not Connected.");
+    }
 }
 
 void loop() {
@@ -20,11 +28,5 @@ bool wifiSetup(){
     Serial.println("Open phone now!");
     
     bool res;
-    if(res){
-      Serial.println("Connected.");
-    }
-    else{
-      Serial.println("Failed to connect.");
-    }
     return res = wm.autoConnect();
 }
