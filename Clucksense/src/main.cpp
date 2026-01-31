@@ -2,10 +2,20 @@
 #include <WiFiManager.h>
 #include <WebServer.h>
 #include <HTTPClient.h>
+#include "../include/espcom.h"
 
 bool wifiSetup();
 void getHelloWorld();
 const char* StatusURL = "http://www.clucksense.com/api/status";
+
+//mac addresses of different peripherals
+uint8_t door_controller_addr[] = {0xCC, 0x7B, 0x5C, 0xA7, 0xEC, 0xF8};
+
+
+//command definitions
+#define OPEN_DOOR 1;
+#define CLOSE_DOOR 2;
+#define SET_TEMP 3;
 
 void setup() {
     //serial setup
@@ -57,3 +67,5 @@ void getHelloWorld() {
 
   http.end();
 }
+
+
