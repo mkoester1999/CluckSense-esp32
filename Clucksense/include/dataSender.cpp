@@ -3,8 +3,8 @@
 #include <ArduinoJson.h>
 
 //api endpoint urls :)
-const char* UUIDURL = "http://www.clucksense.com/api/generate-code";
-const char* SENDURL = "http://www.clucksense.com/api/update-coop";
+const char* UUIDURL = "https://clucksense.com/api/iot/register-coop";
+const char* SENDURL = "https://clucksense.com/api/update-coop";
 
 /*
   gets a fresh uuid from the database
@@ -12,8 +12,8 @@ const char* SENDURL = "http://www.clucksense.com/api/update-coop";
 String getUUID() {
   //send get request
   HTTPClient http;
-  http.begin(UUIDURL); 
-  int httpCode = http.GET();
+  http.begin(UUIDURL);
+  int httpCode = http.POST("");
   if (httpCode == HTTP_CODE_OK) {
     // Get the response body as a raw string
     String payload = http.getString();
@@ -23,16 +23,16 @@ String getUUID() {
     StaticJsonDocument<128> doc;
     DeserializationError err = deserializeJson(doc, payload);
     if (err) {
-        Serial.println("JSON parse failed");
-        exit(1);
+      Serial.println("JSON parse failed");
+      http.end();
+      return " ";
     }
     //return the uuid
     return doc["data"].as<String>();
     //if we couldnt contact the server for some reason
   } else {
-    Serial.printf("HTTP GET failed, code: %d\n", httpCode);
+    Serial.printf("HTTP POST failed, code: %d\n", httpCode);
     http.end();
-    exit(1);
   }
 }
 
@@ -53,10 +53,7 @@ String sendData(String msg){
         //unpack response, to be sent to sensor node by main. 
         StaticJsonDocument<128> doc;
         deserializeJson(doc, response);
-        String csv = String(doc["doorOpen"].as<int>()) + "," +
-             String(doc["doorClosed"].as<int>()) + "," +
-             String(doc["targetTemp"].as<int>());
-
+        String csv = "doorOpen," + String(doc["doorOpen"].as<int>()) + "\n" + "targetTemp," + String(doc["targetTemp"].as<int>());
         Serial.println(csv);
         return(csv);
     }

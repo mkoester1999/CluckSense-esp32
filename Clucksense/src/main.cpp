@@ -53,11 +53,14 @@ void loop(){
 
       String out;
       serializeJson(doc, out);
-      Serial.println(out);
       //update coop
       String command = sendData(out);
-      Serial2.println(out); //change to out eventually
-  }  
+      if(command != ""){
+        Serial2.printf("%s\n", command);
+        //Serial2.printf("DoorOpen,1\ntargetTemp,60");
+      }
+      //Serial2.printf("doorOpen,1\ntargetTemp,60\n");
+  }
 }
 
 bool wifiSetup(){
