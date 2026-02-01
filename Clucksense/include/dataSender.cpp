@@ -53,7 +53,8 @@ String sendData(String msg){
         //unpack response, to be sent to sensor node by main. 
         StaticJsonDocument<128> doc;
         deserializeJson(doc, response);
-        String csv = "doorOpen," + String(doc["doorOpen"].as<int>()) + "\n" + "targetTemp," + String(doc["targetTemp"].as<int>());
+        
+        String csv = "doorOpen," + String(doc["doorOpen"].as<int>()) + "\n" + "targetTemp," + String(doc["targetTemp"].as<int>() + "\n");
         Serial.println(csv);
         return(csv);
     }

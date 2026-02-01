@@ -56,8 +56,7 @@ void loop(){
       //update coop
       String command = sendData(out);
       if(command != ""){
-        Serial2.printf("%s\n", command);
-        //Serial2.printf("DoorOpen,1\ntargetTemp,60");
+        Serial2.print(command);
       }
       //Serial2.printf("doorOpen,1\ntargetTemp,60\n");
   }
