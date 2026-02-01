@@ -2,7 +2,7 @@
 #include <HTTPClient.h>
 #include <ArduinoJson.h>
 
-//urls :)
+//api endpoint urls :)
 const char* UUIDURL = "http://www.clucksense.com/api/generate-code";
 const char* SENDURL = "http://www.clucksense.com/api/update-coop";
 
@@ -39,38 +39,31 @@ String getUUID() {
 /*
   takes the uuid, and sends all of the sensor data to the server, then it recieves some commands in response.
 */
-void sendData(String coopID){
-    //recieve data from sensors.. eventually i think this will be passed into as arguments
-    int temp = 65;
-    int humidity = 20;
-    bool food = 1;
-    bool water = 1;
-    coopID = "12345678";
-
-    //construct json post
-    StaticJsonDocument<128> doc;
-    doc["temp"] = temp;
-    doc["humidity"] = humidity;
-    doc["food"] = food;
-    doc["water"] = water;
-    doc["coopID"] = coopID;
-    String out;
-    serializeJson(doc, out);
-    
-    //send post
+String sendData(String msg){
+    //send the server our sensor readings
     HTTPClient http;
     http.begin(SENDURL); 
     http.addHeader("Content-Type", "application/json");
-    int httpCode = http.POST(out);
+    int httpCode = http.POST(msg);
 
     //recieve response
     if (httpCode > 0) {
         String response = http.getString();
-        Serial.println("Server response:");
         Serial.println(response);
+        //unpack response, to be sent to sensor node by main. 
+        StaticJsonDocument<128> doc;
+        deserializeJson(doc, response);
+        String csv = String(doc["doorOpen"].as<int>()) + "," +
+             String(doc["doorClosed"].as<int>()) + "," +
+             String(doc["targetTemp"].as<int>());
+
+        Serial.println(csv);
+        return(csv);
     }
     else{
+      //we dont really care if this fails sometimes.
       Serial.printf("POST failed: %s\n", http.errorToString(httpCode).c_str());
+      return "";
     }
     http.end();
 }
